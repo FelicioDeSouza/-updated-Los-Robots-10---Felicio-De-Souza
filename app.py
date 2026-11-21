@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-st.set_page_config(page_title="ROB-3 | Robotics Kit & Repair Studio", layout="wide")
+st.set_page_config(page_title="Los Robots (10) | ROB-3 Robotics Studio", layout="wide")
 
 
 def money(val) -> float:
@@ -16,7 +16,7 @@ def money(val) -> float:
 
 def default_state():
     return {
-        "team_id": "ROB-TEAM",
+        "team_id": "Los Robots (10)",
         "course": "AP Calculus",
         "pathway_id": "ROB-3",
         "selected_level": "Advanced",
@@ -56,7 +56,7 @@ if "biz" not in st.session_state:
 
 biz = st.session_state.biz
 
-# Ensure keys exist if loading a Stage 1 JSON snapshot
+# Ensure keys exist if loading an earlier JSON snapshot
 for key, default_val in default_state().items():
     if key not in biz:
         biz[key] = default_val
@@ -151,7 +151,7 @@ def run_month_step(
 
 
 # --- HEADER ---
-st.title("ROB-3 | Robotics Kit & Repair Studio (Stage 2 Dashboard)")
+st.title("Los Robots (10) | Robotics Kit & Repair Studio (ROB-3)")
 st.caption(
     f"Team: {biz['team_id']} | Course: {biz['course']} ({biz['selected_level']}) | "
     f"State: v{biz['state_version']} ({biz['snapshot_id']}) | Simulation Only (Fictional Data)"
@@ -167,10 +167,11 @@ with st.sidebar:
         index=["Foundation", "Applied", "Advanced"].index(biz["selected_level"]),
     )
 
+    safe_team_slug = biz["team_id"].replace(" ", "_").replace("(", "").replace(")", "")
     st.download_button(
         label="Export Snapshot JSON",
         data=json.dumps(biz, indent=2),
-        file_name=f"{biz['team_id']}_v{biz['state_version']}_snapshot.json",
+        file_name=f"{safe_team_slug}_v{biz['state_version']}_snapshot.json",
         mime="application/json",
     )
 
@@ -420,7 +421,7 @@ with tabs[1]:
 
 # --- TAB 3: REPORT CENTER & DECISION MEMO ---
 with tabs[2]:
-    st.subheader(f"Reconciled Report Center | Snapshot {biz['snapshot_id']} (v{biz['state_version']})")
+    st.subheader(f"Reconciled Report Center | {biz['team_id']} | Snapshot {biz['snapshot_id']} (v{biz['state_version']})")
     ops_entries = [e for e in biz["ledger"] if e["event_type"] == "MONTHLY_OPERATIONS"]
     restock_entries = [e for e in biz["ledger"] if e["event_type"] == "INVENTORY_RESTOCK"]
 
@@ -529,209 +530,4 @@ with tabs[2]:
                     "decision_id": f"DEC-{len(biz['decisions']) + 1:02d}",
                     "snapshot_id": biz["snapshot_id"],
                     "state_version": biz["state_version"],
-                    "question": d_q,
-                    "reports_cited": ", ".join(d_reports),
-                    "chosen_action": d_choice,
-                    "prediction": d_pred,
-                    "owner_and_checker": d_owner,
-                })
-                st.success("Decision Memo saved to snapshot.")
-                st.rerun()
-
-    if biz["decisions"]:
-        st.dataframe(pd.DataFrame(biz["decisions"]), use_container_width=True)
-
-# --- TAB 4: COSTED MARKETING STUDIO ---
-with tabs[3]:
-    st.subheader("Costed Marketing Studio (Fictional Simulation Only)")
-    st.caption("Drafts require student review before simulated launch. Each Campaign ID is charged once.")
-
-    mc1, mc2 = st.columns(2)
-    with mc1:
-        camp_id = st.text_input("Unique Campaign ID", value=f"CAMP-ROB-{len(biz['campaigns']) + 1:02d}")
-        offering = st.selectbox(
-            "ROB-3 Offering",
-            ["Introductory robot kit", "Sensor upgrade", "Repair service"],
-        )
-        audience = st.text_input("Target Audience", value="High school robotics clubs & STEM hobbyists")
-        headline = st.text_input("Approved Truthful Claim / Headline", value="Build & calibrate real ultrasonic sensors with step-by-step kits")
-        design_hrs = st.number_input("Design Labor Hours", min_value=0.0, value=2.0, step=0.5)
-        design_rate = st.number_input("Design Hourly Rate ($/hr)", min_value=0.0, value=15.0, step=5.0)
-        assets_cost = st.number_input("Licensed Assets Cost ($)", min_value=0.0, value=10.0, step=5.0)
-        print_qty = st.number_input("Print Quantity (flyers)", min_value=0, value=100, step=25)
-        print_unit = st.number_input("Print Unit Cost ($/flyer)", min_value=0.0, value=0.25, step=0.05)
-        dist_place = st.number_input("Distribution & Digital Placement ($)", min_value=0.0, value=35.0, step=5.0)
-
-    with mc2:
-        total_camp_cost = money(design_hrs * design_rate + assets_cost + print_qty * print_unit + dist_place)
-        st.metric("Total Itemized Campaign Cost", f"${total_camp_cost:,.2f}")
-        st.markdown("**Printable Flyer Preview:**")
-        flyer_text = (
-            f"=== DEMONSTRATION FLYER (NO REAL OFFERS) ===\n"
-            f"Studio: {biz['team_id']} Robotics Kit & Repair Studio\n"
-            f"Offering: {offering} (${biz['base_price']:,.2f})\n"
-            f"Audience: {audience}\n"
-            f"Message: {headline}\n"
-            f"Contact: demo-robotics@school-sim.example\n"
-            f"============================================"
-        )
-        st.code(flyer_text, language="text")
-
-        reviewer_ok = st.checkbox("Independent Reviewer checked truthful claims, accessibility, and itemized budget")
-        if st.button("Approve & Launch Simulated Campaign", type="primary"):
-            if any(c["campaign_id"] == camp_id for c in biz["campaigns"]):
-                st.error(f"Duplicate campaign_id '{camp_id}' rejected. A campaign can only be launched once.")
-            elif not reviewer_ok:
-                st.error("Reviewer verification checkbox must be checked before launching.")
-            else:
-                biz["campaigns"].append({
-                    "campaign_id": camp_id,
-                    "offering": offering,
-                    "audience": audience,
-                    "total_cost": total_camp_cost,
-                    "status": "Launched",
-                    "charged_to_ledger": False,
-                    "state_version": biz["state_version"],
-                })
-                st.success(
-                    f"Campaign {camp_id} (${total_camp_cost:,.2f}) approved! "
-                    f"It is now queued in Tab 1 'Approved Own-Business Ad Spend' for your next simulation step."
-                )
-                st.rerun()
-
-    if biz["campaigns"]:
-        st.markdown("**Campaign Log:**")
-        st.dataframe(pd.DataFrame(biz["campaigns"]), use_container_width=True)
-
-# --- TAB 5: AI RECOMMENDATIONS HANDOFF ---
-with tabs[4]:
-    st.subheader("Departmental AI Assistants Handoff (Manual Import & Student Approval)")
-    st.caption(
-        "Workflow: Export Snapshot JSON (Sidebar) -> Paste into Finance / Operations / Marketing / Reviewer Gem -> "
-        "Record recommendation below -> Verify math -> Approve or Reject."
-    )
-
-    with st.form("ai_handoff_form"):
-        ai_role = st.selectbox("Departmental Role", ["Finance", "Operations", "Market and Marketing", "Independent Reviewer"])
-        rec_snap_ver = st.number_input("Snapshot State Version Cited by AI", min_value=1, value=int(biz["state_version"]), step=1)
-        ai_question = st.text_input("Question Asked", value="Compare current $120 price with a 10% price increase.")
-        ai_summary = st.text_area("AI Proposed Changes & Calculations Summary")
-        student_check = st.text_input("Independent Student Math Check (Required before approval)")
-        action_choice = st.radio("Human Decision", ["Approve Proposal", "Reject Proposal"], horizontal=True)
-
-        if st.form_submit_button("Log & Validate AI Recommendation"):
-            if rec_snap_ver != biz["state_version"]:
-                st.error(
-                    f"Stale or mismatched version rejected! AI cited v{rec_snap_ver}, "
-                    f"but current business state is v{biz['state_version']}."
-                )
-            elif action_choice == "Approve Proposal" and not student_check.strip():
-                st.error("You must enter an independent student math check before approving any AI proposal.")
-            else:
-                status_label = "Approved" if action_choice == "Approve Proposal" else "Rejected"
-                biz["recommendations"].append({
-                    "role": ai_role,
-                    "state_version": rec_snap_ver,
-                    "question": ai_question,
-                    "proposed_changes": ai_summary,
-                    "student_verification": student_check,
-                    "approval_status": status_label,
-                })
-                st.success(f"{ai_role} recommendation logged as {status_label} for state v{rec_snap_ver}.")
-                st.rerun()
-
-    if biz["recommendations"]:
-        st.dataframe(pd.DataFrame(biz["recommendations"]), use_container_width=True)
-
-# --- TAB 6: LEDGER & ACCEPTANCE TESTS ---
-with tabs[5]:
-    st.subheader("Dated Event Ledger")
-    if biz["ledger"]:
-        df_ledger = pd.DataFrame(biz["ledger"])
-        st.dataframe(df_ledger, use_container_width=True)
-        st.download_button(
-            "Export Ledger CSV",
-            data=df_ledger.to_csv(index=False),
-            file_name=f"{biz['team_id']}_ledger_v{biz['state_version']}.csv",
-            mime="text/csv",
-        )
-    else:
-        st.write("No simulation steps committed yet. Run a month in Tab 1 or run the Acceptance Checks below.")
-
-    st.divider()
-    st.subheader("Automated Acceptance & Fixture Checks")
-    if st.button("Run All Acceptance Checks"):
-        results = []
-
-        # Test 1: Zero sales check
-        s0 = default_state()
-        run_month_step(s0, "T-ZERO", "2027-01-31", requested=0, price=120.0, staff_hours=90.0, hours_per_unit=3.0, restock_units=0, defect_rate=0.0, ad_cost=0.0)
-        last0 = s0["ledger"][-1]
-        results.append({
-            "Test": "Zero Sales (requested=0)",
-            "Expected": "Rev=$0, Var=$0, Profit=-$600",
-            "Actual": f"Rev=${last0['revenue']:.0f}, Var=${last0['component_expense'] + last0['noncomponent_var_expense']:.0f}, Profit=${last0['operating_profit']:.0f}",
-            "Status": "PASS" if (last0["revenue"] == 0 and last0["operating_profit"] == -600.0) else "FAIL",
-        })
-
-        # Test 2: ROB Business-Specific Stock & Defect Test
-        s_rob = default_state()
-        s_rob["stock_units"] = 10
-        run_month_step(s_rob, "T-ROB", "2027-01-31", requested=40, price=120.0, staff_hours=90.0, hours_per_unit=3.0, restock_units=0, defect_rate=0.0, ad_cost=0.0)
-        last_rob = s_rob["ledger"][-1]
-        results.append({
-            "Test": "ROB Stock Cap (stock=10, restock=0)",
-            "Expected": "Sold=10, Rev=$1200, Profit=-$50, Stock=0",
-            "Actual": f"Sold={last_rob['sold']}, Rev=${last_rob['revenue']:.0f}, Profit=${last_rob['operating_profit']:.0f}, Stock={s_rob['stock_units']}",
-            "Status": "PASS" if (last_rob["sold"] == 10 and last_rob["operating_profit"] == -50.0 and s_rob["stock_units"] == 0) else "FAIL",
-        })
-
-        # Test 3: 3-Month Fixture Replay
-        s_fix = default_state()
-        fixture_rows = [
-            ("2027-01", 40, 30, 0, 3600.0, 2550.0, 1050.0, 6950.0, 70),
-            ("2027-02", 44, 30, 100, 3600.0, 2650.0, 950.0, 8800.0, 40),
-            ("2027-03", 36, 22, 0, 2640.0, 2030.0, 610.0, 10070.0, 18),
-        ]
-        fixture_ok = True
-        for m, req, cap_ov, ad, exp_rev, exp_tot_exp, exp_prof, exp_cash, exp_stk in fixture_rows:
-            run_month_step(s_fix, f"FIX-{m}", f"{m}-28", requested=req, price=120.0, staff_hours=90.0, hours_per_unit=3.0, restock_units=0, defect_rate=0.0, ad_cost=ad, capacity_override=cap_ov)
-            row_l = s_fix["ledger"][-1]
-            tot_exp = money(row_l["component_expense"] + row_l["noncomponent_var_expense"] + row_l["fixed_expense"] + row_l["marketing_expense"])
-            if not (
-                row_l["revenue"] == exp_rev
-                and tot_exp == exp_tot_exp
-                and row_l["operating_profit"] == exp_prof
-                and s_fix["cash"] == exp_cash
-                and s_fix["stock_units"] == exp_stk
-            ):
-                fixture_ok = False
-        results.append({
-            "Test": "ROB 3-Month Fixture Replay",
-            "Expected": "M3 Cash=$10,070, Stock=18",
-            "Actual": f"M3 Cash=${s_fix['cash']:,.2f}, Stock={s_fix['stock_units']}",
-            "Status": "PASS" if fixture_ok else "FAIL",
-        })
-
-        # Test 4: Duplicate run_id protection
-        dup_ok, _ = run_month_step(s_fix, "FIX-2027-03", "2027-03-28", requested=36, price=120.0, staff_hours=90.0, hours_per_unit=3.0, restock_units=0, defect_rate=0.0, ad_cost=0, capacity_override=22)
-        results.append({
-            "Test": "Duplicate Run ID Rejection",
-            "Expected": "Rejected (False)",
-            "Actual": f"Accepted={dup_ok}",
-            "Status": "PASS" if not dup_ok else "FAIL",
-        })
-
-        # Test 5: AP Calculus Course Acceptance Check
-        a_t, b_t, v_t, F_t, cap_t = 120.0, 2.0, 10.0, 500.0, 40.0
-        p_corn_t = (a_t - cap_t) / b_t
-        prof_corn_t = (p_corn_t - v_t) * cap_t - F_t
-        int_prof_t = (100 * 10 + 0.5 * 20 * 100) - (60 * 10 + 0.5 * 5 * 100)
-        results.append({
-            "Test": "AP Calculus Constrained Opt & Integral Fixture",
-            "Expected": "Opt p=$40, Profit=$700, Integral=$1150",
-            "Actual": f"Opt p=${p_corn_t:.0f}, Profit=${prof_corn_t:.0f}, Integral=${int_prof_t:.0f}",
-            "Status": "PASS" if (p_corn_t == 40.0 and prof_corn_t == 700.0 and int_prof_t == 1150.0) else "FAIL",
-        })
-
-        st.table(pd.DataFrame(results))
+                    "question": d
