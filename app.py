@@ -530,5 +530,5 @@ with tabs[2]:
                     "decision_id": f"DEC-{len(biz['decisions']) + 1:02d}",
                     "snapshot_id": biz["snapshot_id"],
                     "state_version": biz["state_version"],
-                    "question": d)
-                }
+                    "question": d
+                })
